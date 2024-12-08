@@ -210,34 +210,34 @@
         }
         
         // Hiển thị biểu đồ theo ngày
-        function generatePlotByDay() {
-            fetch('/plot_by_day', {
-                method: 'POST'
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.error) {
-                    alert('Error generating plots: ' + data.error);
-                } else {
-                    const chartDiv = document.getElementById('chart');
-                    chartDiv.innerHTML = ''; // Xóa biểu đồ cũ
-        
-                    for (const [date, plot_url] of Object.entries(data.plot_urls)) {
-                        const dateTitle = document.createElement('h3');
-                        dateTitle.textContent = `Biểu đồ ngày: ${date}`;
-                        const img = document.createElement('img');
-                        img.src = `data:image/png;base64,${plot_url}`;
-                        img.classList.add('img-fluid');
-        
-                        chartDiv.appendChild(dateTitle);
-                        chartDiv.appendChild(img);
+            function generatePlotByDay() {
+                fetch('/plot_by_day', {
+                    method: 'POST'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        alert('Error generating plots: ' + data.error);
+                    } else {
+                        const chartDiv = document.getElementById('chart');
+                        chartDiv.innerHTML = ''; // Xóa biểu đồ cũ
+            
+                        for (const [date, plot_url] of Object.entries(data.plot_urls)) {
+                            const dateTitle = document.createElement('h3');
+                            dateTitle.textContent = `Biểu đồ ngày: ${date}`;
+                            const img = document.createElement('img');
+                            img.src = `data:image/png;base64,${plot_url}`;
+                            img.classList.add('img-fluid');
+            
+                            chartDiv.appendChild(dateTitle);
+                            chartDiv.appendChild(img);
+                        }
                     }
-                }
-            })
-            .catch(error => {
-                alert('Error: ' + error);
-            });
-        }
+                })
+                .catch(error => {
+                    alert('Error: ' + error);
+                });
+            }
         
         document.addEventListener('DOMContentLoaded', () => {
             const table = document.querySelector('table');
