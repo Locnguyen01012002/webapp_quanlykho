@@ -265,12 +265,84 @@ def export_invoice():
     except Exception as e:
         print(f"Error exporting invoices: {e}")
         return jsonify({"error": str(e)}), 500
+    
+
+@app.route('/plot_page')
+def plot_page():
+    global df
+    if df is None:
+        return "No data available to plot", 400
+
+    try:
+        # Tính số lượng sản phẩm
+        product_counts = df['MẶT HÀNG'].value_counts()
+
+        # Tạo biểu đồ
+        img = io.BytesIO()
+        plt.figure(figsize=(10, 6))
+        plt.bar(product_counts.index, product_counts.values, color='skyblue')
+        plt.xlabel('PRODUCTS NAME')
+        plt.ylabel('QUANTITY')
+        plt.title('SỐ LƯỢNG HÀNG HÓA')
+        plt.tight_layout()
+        plt.savefig(img, format='png')
+        img.seek(0)
+        plot_url = base64.b64encode(img.getvalue()).decode('utf8')
+
+        return render_template('chart.html', plot_url=plot_url)
+    except Exception as e:
+        return f"Error: {str(e)}"
 
 
-# if __name__ == '__main__':
-#     app.run(debug=True, port=5001, use_reloader=False)
+@app.route('/plot_by_day_page', methods=['GET', 'POST'])
+def plot_by_day_page():
+    global df
+    if request.method == 'GET':
+        try:
+            # Lấy danh sách ngày duy nhất từ cột 'TIME' và định dạng dd/mm/yyyy
+            df = fetch_data_from_sheets()
+            df['DATE'] = pd.to_datetime(df['TIME']).dt.date
+            unique_dates = df['DATE'].drop_duplicates().sort_values()
+            formatted_dates = [date.strftime('%d/%m/%Y') for date in unique_dates]
+
+            return render_template('date_picker.html', dates=formatted_dates)
+        except Exception as e:
+            return f"Error fetching dates: {str(e)}", 500
+
+    if request.method == 'POST':
+        selected_date = request.form.get('selected_date')
+        if not selected_date:
+            return "No date selected", 400
+
+        try:
+            # Chuyển selected_date từ dd/mm/yyyy sang datetime
+            selected_date = pd.to_datetime(selected_date, format='%d/%m/%Y').date()
+            daily_data = df[pd.to_datetime(df['TIME']).dt.date == selected_date]
+
+            # Tính số lượng sản phẩm
+            product_counts = daily_data['MẶT HÀNG'].value_counts()
+
+            # Tạo biểu đồ
+            img = io.BytesIO()
+            plt.figure(figsize=(10, 6))
+            plt.bar(product_counts.index, product_counts.values, color='skyblue')
+            plt.xlabel('PRODUCTS NAME')
+            plt.ylabel('QUANTITY')
+            plt.title(f'SỐ LƯỢNG HÀNG HÓA - {selected_date.strftime("%d/%m/%Y")}')
+            plt.tight_layout()
+            plt.savefig(img, format='png')
+            img.seek(0)
+            plot_url = base64.b64encode(img.getvalue()).decode('utf8')
+
+            return render_template('chart.html', plot_url=plot_url)
+        except Exception as e:
+            return f"Error: {str(e)}", 500
+
+
+if __name__ == '__main__':
+    app.run(debug=True, port=5001, use_reloader=False)
     
     
 # Chạy ứng dụng trên Vercel
-app = app
+# app = app
 
